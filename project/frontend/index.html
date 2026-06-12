@@ -23,9 +23,9 @@
 
       <!-- Nav links -->
       <nav class="header-nav">
-        <a href="#" class="nav-link active">Evaluate</a>
-        <a href="#" class="nav-link">History</a>
-        <a href="#" class="nav-link">Metrics</a>
+        <a href="#" class="nav-link active" id="nav-evaluate">Evaluate</a>
+        <a href="#" class="nav-link" id="nav-history">History</a>
+        <a href="#" class="nav-link" id="nav-metrics">Metrics</a>
       </nav>
     </div>
 
@@ -42,6 +42,9 @@
       </div>
 
       <!-- Icon buttons -->
+      <button class="icon-btn" id="theme-toggle" aria-label="Toggle Theme">
+        <span class="material-symbols-outlined" id="theme-toggle-icon">dark_mode</span>
+      </button>
       <button class="icon-btn" aria-label="Notifications">
         <span class="material-symbols-outlined">notifications</span>
       </button>
@@ -62,6 +65,9 @@
 
   <!-- ===== Main Canvas ===== -->
   <main class="main-canvas">
+
+    <!-- ===== Evaluate View ===== -->
+    <div id="view-evaluate" class="app-view">
 
     <!-- Page Header -->
     <section class="page-header">
@@ -166,7 +172,13 @@
 
               <!-- Question Field -->
               <div>
-                <label class="text-label-caps field-label" for="question-display">Question Field (Read-only)</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--space-xs);">
+                  <label class="text-label-caps field-label" for="question-display" style="margin-bottom:0;">Question Field (Read-only)</label>
+                  <div style="display:flex; gap: var(--space-xs);">
+                    <span class="chip" id="meta-type" style="display:none;">spatial</span>
+                    <span class="chip" id="meta-difficulty" style="display:none;">hard</span>
+                  </div>
+                </div>
                 <div class="question-box" id="question-display">
                   How many pedestrians are waiting at the crosswalk?
                 </div>
@@ -190,6 +202,26 @@
                 <span class="text-headline-sm result-text correct" id="result-text">Predictable</span>
               </div>
 
+              <!-- Manual Correctness Override -->
+              <div class="override-container" id="override-container" style="display:none; justify-content:center; gap:var(--space-sm); margin-top: -4px;">
+                <button class="btn-subtle" id="override-correct-btn" style="display:inline-flex; align-items:center; gap:4px; padding:6px 12px; background:var(--surface-container-high); border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:12px; font-weight:700; cursor:pointer; color:var(--on-surface-variant);">
+                  <span class="material-symbols-outlined" style="font-size:14px; color:#059669;">check</span> Mark Correct
+                </button>
+                <button class="btn-subtle" id="override-incorrect-btn" style="display:inline-flex; align-items:center; gap:4px; padding:6px 12px; background:var(--surface-container-high); border:1px solid var(--outline-variant); border-radius:var(--radius-sm); font-size:12px; font-weight:700; cursor:pointer; color:var(--on-surface-variant);">
+                  <span class="material-symbols-outlined" style="font-size:14px; color:#e11d48;">close</span> Mark Incorrect
+                </button>
+              </div>
+
+              <!-- Ground Truth Reasoning Section -->
+              <details class="reasoning-details" id="reasoning-details" style="display:none;">
+                <summary class="text-label-caps" style="cursor:pointer; color:var(--primary); font-weight:700; user-select:none; outline:none; display:flex; align-items:center; gap:4px; margin-top:var(--space-xs);">
+                  <span class="material-symbols-outlined" style="font-size:16px;">psychology</span> Ground Truth Reasoning
+                </summary>
+                <div class="reasoning-content" id="reasoning-content" style="margin-top:var(--space-xs); padding:var(--space-md); background-color:var(--surface-container-low); border:1px solid var(--outline-variant); border-radius:var(--radius-md); font-size:14px; color:var(--on-surface-variant); line-height:1.6;">
+                  Loading reasoning...
+                </div>
+              </details>
+
             </div>
 
             <!-- Evaluate Button -->
@@ -207,6 +239,65 @@
       </div>
 
     </div>
+
+    <!-- ===== Interactive Dataset Gallery ===== -->
+    <section class="card gallery-section" aria-label="Dataset Gallery" style="margin-top: var(--space-xl); padding: var(--space-lg); overflow: hidden;">
+      <div class="gallery-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-md); margin-bottom:var(--space-md);">
+        <div class="gallery-header-left">
+          <h2 class="text-headline-sm gallery-title" style="color:var(--primary); margin-bottom:var(--space-xs);">Interactive Dataset Gallery</h2>
+          <p class="text-body-md gallery-subtitle" style="color:var(--on-surface-variant);">Explore 248 reasoning images. Click any card to load it.</p>
+        </div>
+        
+        <div class="gallery-controls">
+          <!-- Gallery Search -->
+          <div class="gallery-search-wrapper" style="position:relative;">
+            <span class="material-symbols-outlined search-icon" style="position:absolute; left:var(--space-sm); top:50%; transform:translateY(-50%); color:var(--outline); font-size:20px; pointer-events:none;">search</span>
+            <input
+              class="gallery-search-input"
+              id="gallery-search"
+              type="text"
+              placeholder="Search by ID or question..."
+              aria-label="Search dataset gallery"
+              style="padding: var(--space-xs) var(--space-md) var(--space-xs) 36px; background-color: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-family: 'Inter', sans-serif; font-size: 14px; width: 250px; outline: none; color: var(--on-surface);"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="filter-chips-container" id="filter-chips" style="display:flex; flex-wrap:wrap; gap:var(--space-xs); margin-bottom:var(--space-lg); align-items:center;">
+        <span class="filter-chip active" data-filter="all">All Types</span>
+        <span class="filter-chip" data-filter="spatial">Spatial</span>
+        <span class="filter-chip" data-filter="regulatory">Regulatory</span>
+        <span class="filter-chip" data-filter="causal">Causal</span>
+        <span class="filter-chip" data-filter="logical">Logical</span>
+        <span class="filter-chip" data-filter="legal">Legal</span>
+        <div style="width: 1px; height: 16px; background-color: var(--outline-variant); margin: 0 var(--space-xs);"></div>
+        <span class="filter-chip" data-difficulty="hard">Hard Only</span>
+      </div>
+
+      <!-- Gallery Grid -->
+      <div class="gallery-grid" id="gallery-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:var(--space-md); min-height:140px;">
+        <div class="gallery-loading" style="grid-column:1/-1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:var(--space-xl);">
+          <div class="loading-spinner" style="display:block; border-top-color:var(--primary); width:28px; height:28px; border-width:3px;"></div>
+          <span class="text-label-caps" style="margin-top:var(--space-sm); color:var(--outline);">Loading dataset...</span>
+        </div>
+      </div>
+
+      <!-- Pagination / Stats -->
+      <div class="gallery-footer" style="display:flex; justify-content:space-between; align-items:center; margin-top:var(--space-lg); border-top:1px solid var(--outline-variant); padding-top:var(--space-md); flex-wrap:wrap; gap:var(--space-md);">
+        <span class="text-label-caps" style="color:var(--outline);" id="gallery-stats">Showing 0 of 0 entries</span>
+        <div class="gallery-pagination" id="gallery-pagination" style="display:flex; align-items:center; gap:var(--space-md);">
+          <button class="btn-pagination" id="btn-prev" disabled style="background:var(--surface-container-high); border:1px solid var(--outline-variant); border-radius:var(--radius-sm); width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--on-surface);">
+            <span class="material-symbols-outlined" style="font-size:20px;">chevron_left</span>
+          </button>
+          <span class="pagination-info text-label-caps" id="pagination-info" style="color:var(--on-surface); font-weight:700;">Page 1 of 1</span>
+          <button class="btn-pagination" id="btn-next" disabled style="background:var(--surface-container-high); border:1px solid var(--outline-variant); border-radius:var(--radius-sm); width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--on-surface);">
+            <span class="material-symbols-outlined" style="font-size:20px;">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </section>
 
     <!-- ===== Secondary Insights Grid ===== -->
     <section class="insights-grid" aria-label="AI insights">
@@ -231,14 +322,193 @@
 
       <!-- Attention Focus -->
       <div class="insight-card">
-        <h4 class="text-label-caps insight-label">Attention Focus</h4>
+        <h4 class="text-label-caps insight-label">Attention Focus / Type</h4>
         <div class="insight-value-row">
-          <span class="text-display insight-number">Central</span>
-          <span class="chip chip-tertiary">Bounding Box</span>
+          <span class="text-display insight-number" id="focus-value" style="font-size: 24px; text-transform: capitalize;">Central</span>
+          <span class="chip chip-tertiary" id="focus-chip">Bounding Box</span>
         </div>
       </div>
 
-    </section>
+    </div> <!-- Close view-evaluate -->
+
+    <!-- ===== History View ===== -->
+    <div id="view-history" class="app-view" style="display: none;">
+      <!-- Page Header -->
+      <section class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-md);">
+        <div>
+          <h1 class="text-display page-title">Evaluation History</h1>
+          <p class="text-body-md page-subtitle">Chronological record of dataset evaluations in this session.</p>
+        </div>
+        <button class="btn-subtle" id="clear-history-btn" style="display:inline-flex; align-items:center; gap:var(--space-xs); padding:6px 12px; background:var(--error-container); border:1px solid var(--outline-variant); border-radius:var(--radius-md); font-size:12px; font-weight:700; cursor:pointer; color:var(--on-error-container);">
+          <span class="material-symbols-outlined" style="font-size:16px;">delete</span> Clear History
+        </button>
+      </section>
+
+      <!-- History Content Container -->
+      <div class="card" style="padding:var(--space-lg); overflow-x:auto;">
+        <div id="history-empty-state" style="text-align:center; padding:var(--space-xl) var(--space-md);">
+          <span class="material-symbols-outlined" style="font-size:64px; color:var(--outline-variant);">history</span>
+          <h3 class="text-headline-sm" style="margin-top:var(--space-md); color:var(--on-surface);">No evaluations yet</h3>
+          <p class="text-body-md" style="color:var(--on-surface-variant); margin-top:var(--space-xs);">Go to the evaluation tab and click "Evaluate with AI Pipeline" on any image to start.</p>
+        </div>
+
+        <table class="history-table" id="history-table" style="width:100%; border-collapse:collapse; display:none; min-width:800px;">
+          <thead>
+            <tr style="text-align:left; border-bottom:1px solid var(--outline-variant); color:var(--outline); font-size:11px; font-weight:700; text-transform:uppercase;">
+              <th style="padding:var(--space-sm) var(--space-md);">Image</th>
+              <th style="padding:var(--space-sm) var(--space-md);">ID</th>
+              <th style="padding:var(--space-sm) var(--space-md);">Reasoning Type</th>
+              <th style="padding:var(--space-sm) var(--space-md);">Question</th>
+              <th style="padding:var(--space-sm) var(--space-md);">Ground Truth</th>
+              <th style="padding:var(--space-sm) var(--space-md);">AI Prediction</th>
+              <th style="padding:var(--space-sm) var(--space-md); text-align:center;">Latency</th>
+              <th style="padding:var(--space-sm) var(--space-md); text-align:right;">Outcome</th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body">
+            <!-- Dynamically populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== Metrics View ===== -->
+    <div id="view-metrics" class="app-view" style="display: none;">
+      <!-- Page Header -->
+      <section class="page-header">
+        <h1 class="text-display page-title">Detailed Metrics</h1>
+        <p class="text-body-md page-subtitle">Performance breakdown by category, complexity, and latency profiles.</p>
+      </section>
+
+      <!-- Overall Performance Overview -->
+      <section class="metrics-grid" style="margin-bottom: var(--space-xl);">
+        <div class="card metric-card">
+          <p class="text-label-caps field-label" style="margin-bottom: var(--space-xs);">Average Inference Latency</p>
+          <p class="text-display metric-number" style="color: var(--primary);" id="metrics-avg-latency">—</p>
+        </div>
+        <div class="card metric-card">
+          <p class="text-label-caps field-label" style="margin-bottom: var(--space-xs);">Average Confidence Score</p>
+          <p class="text-display metric-number" style="color: var(--on-surface);" id="metrics-avg-confidence">—</p>
+        </div>
+        <div class="card metric-card">
+          <p class="text-label-caps field-label" style="margin-bottom: var(--space-xs);">Legal Accuracy Rate</p>
+          <p class="text-display metric-number" style="color: var(--on-surface);" id="metrics-rate-legal">—</p>
+        </div>
+        <div class="card metric-card">
+          <p class="text-label-caps field-label" style="margin-bottom: var(--space-xs);">Spatial Accuracy Rate</p>
+          <p class="text-display metric-number" style="color: var(--on-surface);" id="metrics-rate-spatial">—</p>
+        </div>
+      </section>
+
+      <div class="main-grid" style="grid-template-columns: 1fr; gap: var(--space-xl); display: grid;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-xl);">
+          <!-- Reasoning Categories -->
+          <div class="card" style="padding: var(--space-lg);">
+            <h2 class="text-headline-sm" style="color: var(--primary); margin-bottom: var(--space-md);">Accuracy by Reasoning Type</h2>
+            <div style="display:flex; flex-direction:column; gap: var(--space-lg);" id="metrics-types-container">
+              
+              <!-- Spatial -->
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-xs);">
+                  <span class="text-label-caps" style="color:var(--on-surface); font-weight:700;">Spatial Reasoning</span>
+                  <span id="metric-spatial-ratio" style="font-size:12px; font-weight:700; color:var(--primary);">0/0 (0%)</span>
+                </div>
+                <div class="progress-track" style="margin-top:0; height:6px;">
+                  <div class="progress-bar" id="metric-spatial-bar" style="width:0%;"></div>
+                </div>
+              </div>
+
+              <!-- Regulatory -->
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-xs);">
+                  <span class="text-label-caps" style="color:var(--on-surface); font-weight:700;">Regulatory Reasoning</span>
+                  <span id="metric-regulatory-ratio" style="font-size:12px; font-weight:700; color:var(--primary);">0/0 (0%)</span>
+                </div>
+                <div class="progress-track" style="margin-top:0; height:6px;">
+                  <div class="progress-bar" id="metric-regulatory-bar" style="width:0%;"></div>
+                </div>
+              </div>
+
+              <!-- Causal -->
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-xs);">
+                  <span class="text-label-caps" style="color:var(--on-surface); font-weight:700;">Causal Reasoning</span>
+                  <span id="metric-causal-ratio" style="font-size:12px; font-weight:700; color:var(--primary);">0/0 (0%)</span>
+                </div>
+                <div class="progress-track" style="margin-top:0; height:6px;">
+                  <div class="progress-bar" id="metric-causal-bar" style="width:0%;"></div>
+                </div>
+              </div>
+
+              <!-- Logical -->
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-xs);">
+                  <span class="text-label-caps" style="color:var(--on-surface); font-weight:700;">Logical Reasoning</span>
+                  <span id="metric-logical-ratio" style="font-size:12px; font-weight:700; color:var(--primary);">0/0 (0%)</span>
+                </div>
+                <div class="progress-track" style="margin-top:0; height:6px;">
+                  <div class="progress-bar" id="metric-logical-bar" style="width:0%;"></div>
+                </div>
+              </div>
+
+              <!-- Legal -->
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-xs);">
+                  <span class="text-label-caps" style="color:var(--on-surface); font-weight:700;">Legal Reasoning</span>
+                  <span id="metric-legal-ratio" style="font-size:12px; font-weight:700; color:var(--primary);">0/0 (0%)</span>
+                </div>
+                <div class="progress-track" style="margin-top:0; height:6px;">
+                  <div class="progress-bar" id="metric-legal-bar" style="width:0%;"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Complexity/Difficulty -->
+          <div class="card" style="padding: var(--space-lg); display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <h2 class="text-headline-sm" style="color: var(--primary); margin-bottom: var(--space-md);">Accuracy by Difficulty</h2>
+              <div style="display:flex; flex-direction:column; gap: var(--space-lg);">
+                
+                <!-- Hard -->
+                <div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-xs);">
+                    <span class="text-label-caps" style="color:var(--error); font-weight:700;">Hard Visual Complexity</span>
+                    <span id="metric-hard-ratio" style="font-size:12px; font-weight:700; color:var(--error);">0/0 (0%)</span>
+                  </div>
+                  <div class="progress-track" style="margin-top:0; height:6px; background-color:var(--surface-container);">
+                    <div class="progress-bar" id="metric-hard-bar" style="width:0%; background:linear-gradient(to right, var(--error), var(--secondary)); box-shadow: 0 0 8px rgba(186, 26, 26, 0.3);"></div>
+                  </div>
+                </div>
+
+                <!-- Normal -->
+                <div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-xs);">
+                    <span class="text-label-caps" style="color:#059669; font-weight:700;">Normal Visual Complexity</span>
+                    <span id="metric-normal-ratio" style="font-size:12px; font-weight:700; color:#059669;">0/0 (0%)</span>
+                  </div>
+                  <div class="progress-track" style="margin-top:0; height:6px;">
+                    <div class="progress-bar" id="metric-normal-bar" style="width:0%; background:#059669; box-shadow: 0 0 8px rgba(5, 150, 105, 0.3);"></div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Dataset info note -->
+            <div style="background-color:var(--surface-container-low); padding:var(--space-md); border-radius:var(--radius-md); border:1px solid var(--outline-variant); margin-top:var(--space-lg);">
+              <div style="display:flex; gap:var(--space-xs); align-items:flex-start;">
+                <span class="material-symbols-outlined" style="color:var(--primary); font-size:20px;">info</span>
+                <p style="font-size:12px; color:var(--on-surface-variant); line-height:1.5; margin:0;">
+                  <strong>Dataset Benchmark Note</strong>: This visual reasoning benchmark contains a heavy bias of <strong>Hard complexity</strong> items (over 90%) to challenge visual grounding and reasoning capabilities.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
   </main>
 

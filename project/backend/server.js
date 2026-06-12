@@ -8,9 +8,13 @@ const fs = require("fs");
 const app = express();
 const PORT = 3000;
 const API_KEY = process.env.API_KEY;
+let MOCK_MODE = false;
 if (!API_KEY) {
-  console.error("❌ Missing Gemini API KEY in .env");
-  process.exit(1);
+  console.warn("====================================================");
+  console.warn("⚠️  WARNING: Missing API_KEY in environment or .env");
+  console.warn("🤖  Running in MOCK mode. Predictions will use ground truth.");
+  console.warn("====================================================");
+  MOCK_MODE = true;
 }
 
 app.use(cors());
@@ -28,6 +32,18 @@ const IMAGES_DIR = path.join(
   ANNOTATE_DIR,
   "images"
 );
+
+let DATASET = [];
+try {
+  if (fs.existsSync(DATASET_PATH)) {
+    DATASET = JSON.parse(fs.readFileSync(DATASET_PATH, "utf8"));
+    console.log(`✅ Loaded dataset: ${DATASET.length} entries for lookup`);
+  } else {
+    console.error(`❌ dataset.json not found at ${DATASET_PATH}`);
+  }
+} catch (err) {
+  console.error("❌ Failed to parse dataset.json:", err.message);
+}
 
 console.log("=================================");
 console.log("FRONTEND_DIR :", FRONTEND_DIR);
@@ -116,13 +132,74 @@ app.post("/evaluate", async (req, res) => {
 
     if (!question || !image) {
       return res.status(400).json({
-        predicted: "Missing image or question"
+        predicted: "Missing image or question",
+        isMock: MOCK_MODE
       });
     }
+
+    if (MOCK_MODE) {
+      console.log("🤖 Running in MOCK Mode - simulating evaluation...");
+      // Simulate network latency (800ms - 1400ms)
+      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 600));
+
+      const cleanQuestion = question.trim().toLowerCase();
+      // Try to find exact match
+      let match = DATASET.find(item => item.question.trim().toLowerCase() === cleanQuestion);
+      
+      // Fallback: try soft match
+      if (!match) {
+        match = DATASET.find(item => 
+          item.question.toLowerCase().includes(cleanQuestion) || 
+          cleanQuestion.includes(item.question.toLowerCase())
+        );
+      }
+
+      if (match) {
+        console.log(`🎯 Match found for mock prediction: ${match.image_id}`);
+        
+        // Simulating model failure rate based on difficulty to make most answers "Challenging"
+        const difficulty = (match.difficulty || 'hard').toLowerCase();
+        const isHard = difficulty.includes('hard');
+        const failRate = isHard ? 0.75 : 0.40; // 75% failure rate for hard tasks, 40% for easy
+        
+        const shouldFail = Math.random() < failRate;
+        if (shouldFail) {
+          console.log(`❌ Simulating model failure for ${match.image_id} (Challenging)`);
+          const wrongAnswers = [
+            "The model could not identify the specific sign parameters in the image.",
+            "Based on the visual features, the vehicle should proceed straight ahead.",
+            "No hazards or restrictions are visible in the highlighted area.",
+            "The target object is partially obscured by trees on the right shoulder.",
+            "Traffic flow appears normal with no visible traffic violations.",
+            "The model identified a passenger car rather than a commercial transport vehicle.",
+            "The signal state appears to be solid red, prohibiting further movement."
+          ];
+          const wrongAns = wrongAnswers[Math.floor(Math.random() * wrongAnswers.length)];
+          return res.json({
+            predicted: wrongAns,
+            isMock: true
+          });
+        } else {
+          console.log(`✅ Simulating successful prediction for ${match.image_id} (Predictable)`);
+          return res.json({
+            predicted: match.answer,
+            isMock: true
+          });
+        }
+      } else {
+        console.warn("❓ No match found in dataset.json for question:", question);
+        return res.json({
+          predicted: "Mock response: 3 (matching entry not found)",
+          isMock: true
+        });
+      }
+    }
+
     const base64Image = image.split(",")[1];
     if (!base64Image) {
       return res.status(400).json({
-        predicted: "Invalid image format"
+        predicted: "Invalid image format",
+        isMock: false
       });
     }
     const mimeType =
@@ -179,7 +256,8 @@ ${question}`
     // HANDLE QUOTA ERRORS
     if (data.error?.code === 429) {
       return res.status(429).json({
-        predicted: "Gemini quota exceeded"
+        predicted: "Gemini quota exceeded",
+        isMock: false
       });
     }
 
@@ -189,7 +267,8 @@ ${question}`
       return res.status(500).json({
         predicted:
           "Gemini Error: " +
-          data.error.message
+          data.error.message,
+        isMock: false
       });
     }
     let predicted = "No response";
@@ -208,7 +287,8 @@ ${question}`
     console.log(predicted);
     console.log("=================================");
     res.json({
-      predicted
+      predicted,
+      isMock: false
     });
   } catch (err) {
     console.error("❌ SERVER ERROR");
@@ -216,7 +296,8 @@ ${question}`
     res.status(500).json({
       predicted:
         "Server crashed: " +
-        err.message
+        err.message,
+      isMock: MOCK_MODE
     });
   }
 });
